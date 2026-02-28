@@ -80,7 +80,7 @@ See the [summary](#summary) for the parameters used for Model 2. This decreased 
 
 **Were your changes successful? Do you have ideas why your changes were successful or not?**
 
->These changes were fairly successful as the validation accuracy increased substantially while validation loss decreased relative to [Model 1](#model-1).
+>These changes were fairly successful as the validation accuracy increased substantially while validation loss decreased relative to [Model 1](#model-1). This was likely successful due to the additional epochs providing more effective training data to iterate over.
 
 ### Model 3
 
@@ -96,7 +96,7 @@ See the [summary](#summary) for the parameters used for Model 3. This further de
 
 **Were your changes successful? Do you have ideas why your changes were successful or not?**
 
->These further changes were also fairly successful as the validation accuracy substantially increased again while validation loss decreased relative to [Model 2](#model-2).
+>These further changes were also fairly successful as the validation accuracy substantially increased again while validation loss decreased relative to [Model 2](#model-2). Similar to the above improvement, this was likely successful due to the additional epochs providing more effective training data to iterate over.
 
 ### Summary
 
