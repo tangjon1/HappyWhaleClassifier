@@ -39,13 +39,24 @@ import argparse
 
 
 parser = argparse.ArgumentParser(description="Simple example of argparse usage.")
+parser.add_argument("-i", "--id", help="Numeric identifier for this run", type=int)
 parser.add_argument("-e", "--epochs", help="Num epochs", type=int)
 parser.add_argument("-l", "--learn-rate", help="Learning rate", type=float)
-parser.add_argument("-b", "--batch", help="Batch size", type=int)
+parser.add_argument("-b", "--batch-size", help="Batch size", type=int)
 parser.add_argument("-o", "--output-dir", help="Directory for output files and images")
+parser.add_argument("-p", "--optimizer", help="Select optimizer", choices=["adam", "sgd"])
+parser.add_argument("-r", "--resolution", help="Image resolution to train on", type=int)
 
 args = parser.parse_args()
 
+def render_args(args: argparse.Namespace) -> str:
+    '''Render the run mode (e.g. 'sort', 'consensus') and all set arguments as a string, separated by newlines'''
+    arg_summary: str = ""
+    for parameter, argument in vars(args).items():
+        arg_summary += f"\t{parameter}: {argument}\n"
+    return arg_summary
+
+print(render_args(args))
 
 # Set device to cuda if it's available otherwise default to "cpu"
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -79,12 +90,14 @@ def show_random_dataset_image(dataset):
     print('Image size is %s' % {img[0].shape})
     print(img.shape)
     plt.show()
+    #print(f"Saving to {args.output_dir}/image_1.png")
+    plt.savefig(f"{args.output_dir}/image_random.png")
 
 show_random_dataset_image(all_images)
 
 ## ADD YOUR TRANSFORMATION HERE
 transform = transforms.Compose([
-            transforms.Resize([224,224]), # Resize the image as our model is optimized for 224x224 pixels
+            transforms.Resize([args.resolution,args.resolution]), # Resize the image as our model is optimized for 224x224 pixels
             transforms.ColorJitter(brightness=.5, hue=.3),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]) # Normalize the data, these are the values that ResNet suggests based on their training data (natural scences))
@@ -120,9 +133,13 @@ train_loader = DataLoader(train_set, batch_size=48, drop_last=True, sampler=trai
 val_loader = DataLoader(val_set, batch_size=48, drop_last=True, shuffle=True)
 test_loader = DataLoader(test_set, batch_size=48, drop_last=True, shuffle=True)
 
-learning_rate=1e-3
-batchsize=48
-epochs=5
+#learning_rate=1e-3
+#batchsize=48
+#epochs=5
+
+learning_rate=args.learn_rate
+batchsize=args.batch_size
+epochs=args.epochs
 
 ## First, we create the basic block that will be used in our residual net
 class BasicBlock(nn.Module):
@@ -220,16 +237,24 @@ print(model)
 
 #define loss function & optimizer
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+match args.optimizer:
+    case "adam":
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    case "sgd":
+        optimizer = optim.SGD(model.parameters(), lr=learning_rate)
 
-#wandb.init(
-#    project="BGMP_HappyWhale",
-#    name="Hope-HappyWhale-SpeciesDataset-hyperparameters", ### Update with your name!
-#    config={"learning rate":0.001,
-#        "architecture": "CNN",
-#        "dataset": "Species",
-#        "epochs":5}
-#)
+wandb.init(
+    entity="BGMP_HappyWhale",
+    project="BGMP_HappyWhale",
+    name=f"J-model-{str(args.id)[-3:]}", ### Update with your name!
+    config={"learning rate":args.learn_rate,
+        "architecture": "CNN",
+        "dataset": "Species",
+        "epochs":args.epochs,
+        "batch_size":args.batch_size,
+        "optimizer":args.optimizer,
+        "resolution":args.resolution}
+)
 
 num_epochs = epochs
 train_losses, train_acc_list, val_losses, val_acc_list = [], [], [],[]
@@ -305,19 +330,25 @@ for epoch in range(num_epochs):
     print(f'Epoch [{epoch+1}/{num_epochs}] Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.2f}% | Val Acc: {val_acc:.2f}% | Val Loss: {val_loss:.2f}%')
 
     # log metrics to wandb
-    #wandb.log({"validation_accuracy": val_acc, "validation_loss": val_loss, "train_loss":train_loss})
+    wandb.log({"validation_accuracy": val_acc, "validation_loss": val_loss, "train_loss":train_loss})
 
-#wandb.finish()
+wandb.finish()
 
-plt.plot(range(num_epochs), val_acc_list, color = "magenta")
+plt.clf()
+fig, ax = plt.subplots()
+ax.plot(range(num_epochs), val_acc_list, color = "magenta")
 plt.xlabel("Epoch number")
-plt.ylabel("Valiation accuracy")
-plt.show()  
+plt.ylabel("Validation accuracy")
+plt.savefig(f"{args.output_dir}/accuracy.png")
+plt.close(fig)
 
-plt.plot(range(num_epochs), val_losses, color = "purple")
+#plt.clf()
+fig, ax = plt.subplots()
+ax.plot(range(num_epochs), val_losses, color = "purple")
 plt.xlabel("Epoch number")
-plt.ylabel("Valiation loss")
-plt.show() 
+plt.ylabel("Validation loss")
+plt.savefig(f"{args.output_dir}/loss.png")
+plt.close(fig)
 
 # predict the test dataset
 def predict(model, dataset):
@@ -382,6 +413,7 @@ def cm_analysis(y_true, y_pred, title, figsize=(10,10)):
     y_axis_labels = ['Beluga','Common dolphin', 'False killer whale', 'Fin whale', 'Gray whale','Humpback whale'] # labels for y-axis
     ax=sns.heatmap(cm, annot=annot, fmt='', vmax=30, xticklabels=x_axis_labels, yticklabels=y_axis_labels, cmap = "viridis")
     ax.set_title(title)
+    plt.savefig(f"{args.output_dir}/cm.png")
 
 ## This plot only contains the test set of data
 ## The test set of data has not been seen by the model yet
@@ -432,6 +464,7 @@ def visualize_ig(idx,
                              sign="all",
                              show_colorbar=True, 
                              title="Overlayed Integrated Gradients")
+    plt.savefig(f"{args.output_dir}/ig_{idx}.png")
 
 test_pred, test_true = predict(model, test_set)
 

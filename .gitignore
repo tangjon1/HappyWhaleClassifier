@@ -1,1 +1,12 @@
 KEY_ML_assignment_whale_species.ipynb
+.conda
+.ipynb_checkpoints
+runs
+wandb
+.gitignore
+
+results/*
+!results/run_5
+results/run_5/README.md
+results/run_5/*/ig*
+results/run_5/*/image_random.png
