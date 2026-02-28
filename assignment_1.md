@@ -74,9 +74,9 @@ See the [summary](#summary) for the parameters used for Model 2. This decreased 
 
 |||
 |-|-|
-|![image](./results/run_5/42419785_2/accuracy.png)|![image](./results/run_5/42419785_2/loss.png)|
+|![image](./results/run_5/42419793_2/accuracy.png)|![image](./results/run_5/42419793_2/loss.png)|
 
-![image](./results/run_5/42419785_2/cm.png)
+![image](./results/run_5/42419793_2/cm.png)
 
 **Were your changes successful? Do you have ideas why your changes were successful or not?**
 
@@ -90,9 +90,9 @@ See the [summary](#summary) for the parameters used for Model 3. This further de
 
 |||
 |-|-|
-|![image](./results/run_5/42419785_3/accuracy.png)|![image](./results/run_5/42419785_3/loss.png)|
+|![image](./results/run_5/42419794_3/accuracy.png)|![image](./results/run_5/42419794_3/loss.png)|
 
-![image](./results/run_5/42419785_3/cm.png)
+![image](./results/run_5/42419794_3/cm.png)
 
 **Were your changes successful? Do you have ideas why your changes were successful or not?**
 
